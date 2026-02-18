@@ -177,7 +177,6 @@
     const botonesFiltro = document.querySelectorAll('.btn-filtro');
     let filtroTipo = 'todos';
 
-    // Actualiza contadores del header
     function actualizarStats(filtrados) {
         const total = filtrados.length;
         const si = filtrados.filter(e => e.tipo === 'SI').length;
@@ -195,6 +194,8 @@
                 (e.empresa || '').toLowerCase().includes(textoBajo) ||
                 (e.municipio || '').toLowerCase().includes(textoBajo) ||
                 (e.sector || '').toLowerCase().includes(textoBajo) ||
+                (e.direccion || '').toLowerCase().includes(textoBajo) ||
+                (e.cnae || '').toLowerCase().includes(textoBajo) ||
                 (e.cif || '').toLowerCase().includes(textoBajo);
             const coincideTipo = filtroTipo === 'todos' || e.tipo === filtroTipo;
             return coincideTexto && coincideTipo;
@@ -207,15 +208,15 @@
             return;
         }
 
-        // Construimos todo el HTML de una vez para evitar re-parseos innecesarios
         const html = filtrados.map(e => {
             const esBlanca = e.tipo === 'BLANCA';
             return `
                 <div class="card ${esBlanca ? 'BLANCA' : 'SI'}">
                     <div class="empresa-name">${e.empresa}</div>
                     <div class="card-info">
-                        📍 ${e.municipio || '—'} ${e.cp ? '(' + e.cp + ')' : ''}<br>
-                        🆔 ${e.cif || '—'}<br>
+                        📍 ${e.direccion || '—'}<br>
+                        🌍 ${e.municipio || '—'} ${e.cp ? '(' + e.cp + ')' : ''}<br>
+                        🆔 ${e.cif || '—'} &nbsp;|&nbsp; 🔢 CNAE: ${e.cnae || '—'}<br>
                         👷 ${e.trabajadores || '—'} trabajadores &nbsp;|&nbsp; 🏭 ${e.sector || '—'}
                     </div>
                     <span class="badge ${esBlanca ? 'BLANCA' : 'SI'}">
@@ -228,7 +229,6 @@
         lista.innerHTML = html;
     }
 
-    // Filtros de tipo
     botonesFiltro.forEach(btn => {
         btn.addEventListener('click', () => {
             botonesFiltro.forEach(b => b.classList.remove('activo'));
