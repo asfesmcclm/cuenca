@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Censo Cuenca 2026 + IA</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --blanca: #e74c3c;
+            --si: #27ae60;
+            --bg: #f0f2f5;
+            --accent: #3498db;
+            --gemini: #8e44ad;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            padding: 12px 15px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stat-item {
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-item.si { color: var(--si); border: 1px solid var(--si); }
+        .stat-item.blanca { color: var(--blanca); border: 1px solid var(--blanca); }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus { border-color: var(--accent); }
+
+        .filtros {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .btn-filtro {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.9em;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-filtro.activo { background: var(--primary); color: white; }
+
+        .lista { padding: 15px; display: grid; gap: 15px; }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 6px solid #ccc;
+            position: relative;
+        }
+
+        .card.SI { border-left-color: var(--si); }
+        .card.BLANCA { border-left-color: var(--blanca); }
+
+        .empresa-name {
+            font-weight: 800;
+            font-size: 1.05em;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .card-info {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .badge.SI { background: #e8f5e9; color: var(--si); }
+        .badge.BLANCA { background: #fdecea; color: var(--blanca); }
+
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            cursor: pointer;
+            border: 1px solid #dadce0;
+        }
+
+        .btn-maps { background-color: #f1f3f4; color: #1a73e8; }
+        .btn-ia { background-color: #f3e5f5; color: var(--gemini); border-color: #d1c4e9; grid-column: span 2; }
+
+        /* Modal para IA */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-header { font-weight: bold; color: var(--gemini); margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .modal-body { line-height: 1.6; font-size: 0.95em; color: #333; }
+        .close-modal { cursor: pointer; font-size: 1.5em; line-height: 1; }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px; height: 20px;
+            border: 3px solid rgba(142, 68, 173, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--gemini);
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .tts-btn {
+            background: var(--gemini);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 0.8em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .no-results { text-align: center; padding: 40px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🏢 Censo Cuenca 2026</h1>
+        
+        <div id="stats" class="stats"></div>
+
+        <div class="search-container">
+            <input type="text" id="buscador" placeholder="Buscar empresa, municipio o CIF...">
+            <div class="filtros">
+                <button class="btn-filtro activo" data-tipo="TODAS">Todas</button>
+                <button class="btn-filtro" data-tipo="SI">Con Elecciones</button>
+                <button class="btn-filtro" data-tipo="BLANCA">Blancas</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lista" class="lista"></div>
+
+    <div id="modal-ia" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>✨ Estrategia de Visita</span>
+                <span class="close-modal" onclick="cerrarModal()">&times;</span>
+            </div>
+            <div id="ia-body" class="modal-body">
+                Cargando sugerencias inteligentes...
+            </div>
+            <button id="btn-audio" class="tts-btn" style="display:none;" onclick="leerEstrategia()">
+                🔊 Escuchar sugerencias
+            </button>
+        </div>
+    </div>
+
+    <script id="data-script" src="datos.js"></script>
+
+    <script>
+        const apiKey = ""; // La clave se inyecta en el entorno
+        const buscador = document.getElementById('buscador');
+        const lista = document.getElementById('lista');
+        const statsContainer = document.getElementById('stats');
+        const modalIa = document.getElementById('modal-ia');
+        const iaBody = document.getElementById('ia-body');
+        const btnAudio = document.getElementById('btn-audio');
+        let ultimaEstrategia = "";
+
+        let filtroTipo = 'TODAS';
+
+        async function fetchGemini(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                } catch (e) {
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+                }
+            }
+            throw new Error("No se pudo conectar con la IA");
+        }
+
+        async function generarEstrategia(id) {
+            const empresa = empresas.find(e => e.id == id);
+            if (!empresa) return;
+
+            modalIa.style.display = 'flex';
+            iaBody.innerHTML = '<div style="text-align:center"><div class="loading-spinner"></div><br><br>Gemini está analizando la empresa...</div>';
+            btnAudio.style.display = 'none';
+
+            const prompt = `Eres un experto en relaciones laborales y acción sindical en España. 
+            Analiza esta empresa de la provincia de Cuenca y dame 3 consejos rápidos (máximo 100 palabras en total) para un delegado que va a visitarla por primera vez.
+            Empresa: ${empresa.empresa}
+            Sector: ${empresa.sector}
+            Trabajadores: ${empresa.trabajadores}
+            Estado: ${empresa.tipo === 'BLANCA' ? 'Empresa blanca (sin sindicato)' : 'Tiene elecciones'}
+            Ubicación: ${empresa.municipio}
+            Dame consejos prácticos sobre qué temas legales o de convenio podrían interesarles y cómo entrar con buen pie.`;
+
+            try {
+                const result = await fetchGemini(prompt);
+                ultimaEstrategia = result;
+                iaBody.innerText = result;
+                btnAudio.style.display = 'flex';
+            } catch (err) {
+                iaBody.innerText = "Error al generar la estrategia. Por favor, inténtalo de nuevo.";
+            }
+        }
+
+        async function leerEstrategia() {
+            if (!ultimaEstrategia) return;
+            
+            const originalText = btnAudio.innerHTML;
+            btnAudio.innerHTML = "⌛ Procesando voz...";
+            btnAudio.disabled = true;
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: "gemini-2.5-flash-preview-tts",
+                        contents: [{ parts: [{ text: "Dilo de forma profesional y motivadora: " + ultimaEstrategia }] }],
+                        generationConfig: { 
+                            responseModalities: ["AUDIO"],
+                            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                const pcmData = data.candidates[0].content.parts[0].inlineData.data;
+                
+                // Conversión PCM a WAV (simplificada para el entorno)
+                const audioBlob = pcmToWav(pcmData, 24000);
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                
+                btnAudio.innerHTML = "🔊 Reproduciendo...";
+                audio.onended = () => {
+                    btnAudio.innerHTML = "🔊 Escuchar de nuevo";
+                    btnAudio.disabled = false;
+                };
+            } catch (e) {
+                btnAudio.innerHTML = "❌ Error de audio";
+                setTimeout(() => { btnAudio.innerHTML = originalText; btnAudio.disabled = false; }, 2000);
+            }
+        }
+
+        function pcmToWav(base64, sampleRate) {
+            const buffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
+            const wavHeader = new ArrayBuffer(44);
+            const view = new DataView(wavHeader);
+            const length = buffer.byteLength;
+
+            view.setUint32(0, 0x52494646, false); // "RIFF"
+            view.setUint32(4, 36 + length, true);
+            view.setUint32(8, 0x57415645, false); // "WAVE"
+            view.setUint32(12, 0x666d7420, false); // "fmt "
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, 1, true); // Mono
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            view.setUint32(36, 0x64617461, false); // "data"
+            view.setUint32(40, length, true);
+
+            return new Blob([wavHeader, buffer], { type: 'audio/wav' });
+        }
+
+        function cerrarModal() { modalIa.style.display = 'none'; }
+
+        function render(query = '') {
+            if (typeof empresas === 'undefined') {
+                lista.innerHTML = '<div class="no-results">Cargando datos...</div>';
+                return;
+            }
+
+            const q = query.toLowerCase().trim();
+            const filtrados = empresas.filter(e => {
+                const matchTexto = (e.empresa?.toLowerCase().includes(q) || e.municipio?.toLowerCase().includes(q) || e.cif?.toLowerCase().includes(q));
+                return filtroTipo === 'TODAS' ? matchTexto : matchTexto && e.tipo === filtroTipo;
+            });
+
+            actualizarStats(filtrados);
+
+            lista.innerHTML = filtrados.length === 0 ? '<div class="no-results">Sin resultados</div>' : filtrados.map(e => `
+                <div class="card ${e.tipo}">
+                    <span class="badge ${e.tipo}">${e.tipo === 'BLANCA' ? '⚪ BLANCA' : '✅ CON ELECCIONES'}</span>
+                    <div class="empresa-name">${e.empresa}</div>
+                    <div class="card-info">
+                        📍 ${e.direccion || '—'}<br>
+                        🌍 ${e.municipio} | 👷 ${e.trabajadores} empleados<br>
+                        🏭 ${e.sector}
+                    </div>
+                    <div class="card-actions">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(e.direccion + ', ' + e.municipio + ', Cuenca, España')}&travelmode=driving" target="_blank" class="btn-action btn-maps">🚗 Ruta</a>
+                        <button onclick="generarEstrategia(${e.id})" class="btn-action btn-ia">✨ Estrategia con IA</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function actualizarStats(data) {
+            statsContainer.innerHTML = `
+                <div class="stat-item">🔢 ${data.length}</div>
+                <div class="stat-item si">✅ ${data.filter(e => e.tipo === 'SI').length}</div>
+                <div class="stat-item blanca">⚪ ${data.filter(e => e.tipo === 'BLANCA').length}</div>
+            `;
+        }
+
+        botonesFiltro.forEach(btn => btn.addEventListener('click', () => {
+            botonesFiltro.forEach(b => b.classList.remove('activo'));
+            btn.classList.add('activo');
+            filtroTipo = btn.dataset.tipo;
+            render(buscador.value);
+        }));
+
+        buscador.addEventListener('input', (e) => render(e.target.value));
+        window.addEventListener('load', () => render());
+    </script>
+</body>
+</html>
