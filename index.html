@@ -27,22 +27,20 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         body { background-color: #f8fafc; }
         
-        .card-blanca { border-left: 4px solid #ef4444; }
-        .card-si { border-left: 4px solid #10b981; }
-        
-        .page-content { display: none; }
-        .page-content.active { display: block; }
+        /* Bordes reforzados para distinción visual rápida */
+        .card-blanca { 
+            border: 2px solid #fee2e2;
+            border-left: 8px solid #ef4444; 
+        }
+        .card-si { 
+            border: 2px solid #d1fae5;
+            border-left: 8px solid #10b981; 
+        }
 
         .map-bg {
             background-color: #e2e8f0;
             background-image: radial-gradient(#94a3b8 1px, transparent 1px);
             background-size: 30px 30px;
-        }
-
-        .tab-active {
-            background-color: white;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-            color: #1e293b;
         }
     </style>
 </head>
@@ -54,12 +52,7 @@
             <span class="material-symbols-outlined text-slate-700 font-bold">analytics</span>
             <h1 class="text-lg font-extrabold tracking-tight text-slate-800">Censo Cuenca 2026</h1>
         </div>
-        
-        <!-- Selector de Modo: Lista / Mapa -->
-        <div class="flex bg-slate-100 p-1 rounded-lg w-32 justify-between">
-            <button onclick="switchTab('lista')" id="btn-tab-lista" class="flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all tab-active">LISTA</button>
-            <button onclick="switchTab('mapa')" id="btn-tab-mapa" class="flex-1 py-1.5 rounded-md text-[10px] font-bold transition-all text-slate-500">MAPA</button>
-        </div>
+        <div class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded">V1.2</div>
     </div>
 
     <!-- Buscador Global -->
@@ -83,40 +76,28 @@
     </div>
 </header>
 
-<!-- Contenedor: MODO LISTA -->
-<main id="tab-lista" class="page-content active px-5 py-6 space-y-4">
+<!-- Contenido Único: Lista de Empresas -->
+<main class="px-5 py-6 space-y-6">
+    
+    <!-- Mapa Territorial (Integrado como cabecera visual) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Distribución Geográfica</span>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1"><div class="size-2 rounded-full bg-si"></div> <span class="text-[9px] font-bold text-si">SI</span></div>
+                <div class="flex items-center gap-1"><div class="size-2 rounded-full bg-blanca"></div> <span class="text-[9px] font-bold text-blanca">BLANCA</span></div>
+            </div>
+        </div>
+        <div class="h-[200px] relative map-bg overflow-hidden">
+            <div id="map-markers" class="absolute inset-0"></div>
+        </div>
+    </div>
+
     <div id="lista-empresas" class="space-y-4">
         <!-- Cards se inyectan aquí -->
     </div>
 </main>
 
-<!-- Contenedor: MODO MAPA -->
-<main id="tab-mapa" class="page-content px-5 py-6">
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Localización Industrial</span>
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-1"><div class="size-2 rounded-full bg-si"></div> <span class="text-[9px] font-bold">SI</span></div>
-                <div class="flex items-center gap-1"><div class="size-2 rounded-full bg-blanca"></div> <span class="text-[9px] font-bold">BLANCA</span></div>
-            </div>
-        </div>
-        
-        <!-- Canvas del Mapa -->
-        <div class="h-[60dvh] relative map-bg overflow-hidden">
-            <div id="map-markers" class="absolute inset-0"></div>
-            
-            <!-- Centro de Ayuda -->
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
-                <div class="text-center">
-                    <span class="material-symbols-outlined text-6xl text-slate-400">explore</span>
-                    <p class="text-[10px] font-bold text-slate-500 uppercase mt-2">Mapa Territorial de Cuenca</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</main>
-
-<!-- Importación de Datos -->
 <script src="datos.js"></script>
 
 <script>
@@ -128,35 +109,16 @@
     
     let filtroTipo = 'TODAS';
 
-    // Navegación entre pestañas
-    function switchTab(tab) {
-        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
-        document.getElementById(`tab-${tab}`).classList.add('active');
-        
-        const btnLista = document.getElementById('btn-tab-lista');
-        const btnMapa = document.getElementById('btn-tab-mapa');
-        
-        if(tab === 'lista') {
-            btnLista.classList.add('tab-active', 'text-slate-800');
-            btnLista.classList.remove('text-slate-500');
-            btnMapa.classList.remove('tab-active', 'text-slate-800');
-            btnMapa.classList.add('text-slate-500');
-        } else {
-            btnMapa.classList.add('tab-active', 'text-slate-800');
-            btnMapa.classList.remove('text-slate-500');
-            btnLista.classList.remove('tab-active', 'text-slate-800');
-            btnLista.classList.add('text-slate-500');
-            renderMapa();
-        }
-    }
-
-    // Función principal de Ruta
+    /**
+     * Calcula la ruta en Google Maps forzando el modo de viaje en coche (dirflg=d)
+     * y utilizando la ubicación actual del usuario como origen (saddr=My+Location)
+     */
     function abrirRuta(empresa, municipio, direccion) {
-        const query = encodeURIComponent(`${empresa}, ${direccion}, ${municipio}, Cuenca, España`);
-        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+        const destino = encodeURIComponent(`${empresa}, ${direccion}, ${municipio}, Cuenca, España`);
+        const url = `https://www.google.com/maps?saddr=My+Location&daddr=${destino}&dirflg=d`;
+        window.open(url, '_blank');
     }
 
-    // Actualización de indicadores numéricos
     function actualizarStats(data) {
         const total = data.length;
         const si = data.filter(e => e.tipo === 'SI').length;
@@ -168,17 +130,15 @@
                 <div class="flex gap-3">
                     <span class="text-[11px] font-bold text-slate-700">${total} <span class="font-medium text-slate-400">Total</span></span>
                     <span class="text-[11px] font-bold text-si">${si} <span class="font-medium text-slate-400">SI</span></span>
-                    <span class="text-[11px] font-bold text-blanca">${blanca} <span class="font-medium text-slate-400">Blanca</span></span>
+                    <span class="text-[11px] font-bold text-blanca">${blanca} <span class="font-medium text-slate-400">Blancas</span></span>
                 </div>
             </div>
-            <span class="text-[9px] font-black text-slate-300">2026</span>
         `;
     }
 
-    // Renderizado de la Lista
     function render(query = '') {
         if (typeof empresas === 'undefined') {
-            lista.innerHTML = '<div class="py-10 text-center text-slate-400 text-xs">Cargando base de datos...</div>';
+            lista.innerHTML = '<div class="py-10 text-center text-slate-400 text-xs">Cargando datos...</div>';
             return;
         }
 
@@ -192,17 +152,23 @@
         });
 
         actualizarStats(filtrados);
+        renderMapa(filtrados);
 
         if (filtrados.length === 0) {
-            lista.innerHTML = '<div class="py-20 text-center text-slate-400 text-sm italic">Sin coincidencias</div>';
+            lista.innerHTML = '<div class="py-20 text-center text-slate-400 text-sm italic">Sin resultados</div>';
             return;
         }
 
         lista.innerHTML = filtrados.slice(0, 50).map(e => `
-            <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 ${e.tipo === 'SI' ? 'card-si' : 'card-blanca'}">
+            <div class="bg-white rounded-xl p-4 shadow-sm ${e.tipo === 'SI' ? 'card-si' : 'card-blanca'}">
                 <div class="flex justify-between items-start mb-3">
                     <h3 class="font-extrabold text-sm text-slate-800 leading-tight uppercase">${e.empresa}</h3>
-                    <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400 border border-slate-100">${e.id}</span>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400 border border-slate-100">${e.id}</span>
+                        <span class="text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${e.tipo === 'SI' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">
+                            ${e.tipo === 'SI' ? 'Con Elecciones' : 'Sin Elecciones (Blanca)'}
+                        </span>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-y-2 mb-4">
@@ -214,57 +180,36 @@
                         <span class="material-symbols-outlined text-[14px] text-slate-400">groups</span>
                         <span>${e.trabajadores} empl.</span>
                     </div>
-                    <div class="col-span-2 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                    <div class="col-span-2 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium border-t border-slate-50 pt-2">
                         <span class="material-symbols-outlined text-[14px] text-slate-400">factory</span>
                         <span class="truncate">${e.sector || 'General'}</span>
                     </div>
                 </div>
 
                 <button onclick="abrirRuta('${e.empresa.replace(/'/g, "")}', '${e.municipio}', '${e.direccion || ""}')" 
-                    class="w-full bg-slate-800 text-white py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all">
-                    <span class="material-symbols-outlined text-sm">directions</span> Calcular Ruta
+                    class="w-full bg-slate-800 text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-sm">directions_car</span> Calcular Ruta en Coche
                 </button>
             </div>
         `).join('');
-        
-        // Si el mapa está activo, también lo actualizamos
-        if (document.getElementById('tab-mapa').classList.contains('active')) {
-            renderMapa(filtrados);
-        }
     }
 
-    // Renderizado de marcadores en el Mapa
-    function renderMapa(dataOverride = null) {
-        if (typeof empresas === 'undefined') return;
-
-        const q = buscador.value.toLowerCase().trim();
-        const filtrados = dataOverride || empresas.filter(e => {
-            const matchQuery = e.empresa.toLowerCase().includes(q) || e.municipio.toLowerCase().includes(q);
-            const matchTipo = filtroTipo === 'TODAS' ? true : e.tipo === filtroTipo;
-            return matchQuery && matchTipo;
-        });
-
+    function renderMapa(filtrados) {
         mapMarkers.innerHTML = '';
-        
-        // Para el mapa limitamos el número de puntos por rendimiento visual
         const visibleMarkers = filtrados.slice(0, 40);
         visibleMarkers.forEach(e => {
             const pin = document.createElement('div');
-            // Generamos posición pseudo-geográfica estable basada en el ID
             const posX = ((e.id % 85) + 5); 
             const posY = (((e.id * 7) % 85) + 5);
             
-            pin.className = `absolute size-3.5 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-150 transition-transform`;
+            pin.className = `absolute size-3 rounded-full border-2 border-white shadow-sm`;
             pin.style.backgroundColor = e.tipo === 'SI' ? '#10b981' : '#ef4444';
             pin.style.left = `${posX}%`;
             pin.style.top = `${posY}%`;
-            pin.title = e.empresa;
-            
             mapMarkers.appendChild(pin);
         });
     }
 
-    // Gestión de filtros de botones
     filtrosBtn.forEach(btn => btn.addEventListener('click', () => {
         filtrosBtn.forEach(b => {
             b.className = "filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-white border border-slate-200 text-slate-600 text-[11px] font-bold transition-all";
@@ -276,7 +221,6 @@
 
     buscador.addEventListener('input', (e) => render(e.target.value));
 
-    // Arranque inicial
     setTimeout(() => render(), 150);
 </script>
 </body>
