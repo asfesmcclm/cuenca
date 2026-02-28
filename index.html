@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Censo Cuenca 2026</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --blanca: #e74c3c;
+            --si: #27ae60;
+            --bg: #f0f2f5;
+            --accent: #3498db;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            padding: 12px 15px;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .stat-item {
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-item.si { color: var(--si); border: 1px solid var(--si); }
+        .stat-item.blanca { color: var(--blanca); border: 1px solid var(--blanca); }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        .filtros {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .btn-filtro {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.9em;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-filtro.activo {
+            background: var(--primary);
+            color: white;
+        }
+
+        .lista {
+            padding: 15px;
+            display: grid;
+            gap: 15px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-left: 6px solid #ccc;
+            position: relative;
+        }
+
+        .card.SI { border-left-color: var(--si); }
+        .card.BLANCA { border-left-color: var(--blanca); }
+
+        .empresa-name {
+            font-weight: 800;
+            font-size: 1.05em;
+            color: var(--primary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .card-info {
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .badge.SI { background: #e8f5e9; color: var(--si); }
+        .badge.BLANCA { background: #fdecea; color: var(--blanca); }
+
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 12px;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:active {
+            opacity: 0.7;
+        }
+
+        .btn-maps {
+            background-color: #f1f3f4;
+            color: #1a73e8;
+            border: 1px solid #dadce0;
+        }
+
+        .btn-search {
+            background-color: #f1f3f4;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🏢 Censo Cuenca 2026</h1>
+        
+        <div id="stats" class="stats">
+            <!-- Stats dinámicos -->
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="buscador" placeholder="Buscar empresa, municipio o CIF...">
+            <div class="filtros">
+                <button class="btn-filtro activo" data-tipo="TODAS">Todas</button>
+                <button class="btn-filtro" data-tipo="SI">Con Elecciones</button>
+                <button class="btn-filtro" data-tipo="BLANCA">Blancas</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lista" class="lista"></div>
+
+    <!-- Cargamos los datos con un ID para controlar su carga -->
+    <script id="data-script" src="datos.js"></script>
+
+    <script>
+        const buscador = document.getElementById('buscador');
+        const lista = document.getElementById('lista');
+        const statsContainer = document.getElementById('stats');
+        const botonesFiltro = document.querySelectorAll('.btn-filtro');
+
+        let filtroTipo = 'TODAS';
+
+        // Manejo de Service Worker corregido para evitar errores en entornos sin HTTPS
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.log('SW registration skipped:', err);
+                });
+            });
+        }
+
+        function actualizarStats(data) {
+            const total = data.length;
+            const si = data.filter(e => e.tipo === 'SI').length;
+            const blanca = data.filter(e => e.tipo === 'BLANCA').length;
+
+            statsContainer.innerHTML = `
+                <div class="stat-item">🔢 ${total}</div>
+                <div class="stat-item si">✅ ${si}</div>
+                <div class="stat-item blanca">⚪ ${blanca}</div>
+            `;
+        }
+
+        function render(query = '') {
+            // Verificación de seguridad para evitar ReferenceError
+            if (typeof empresas === 'undefined') {
+                lista.innerHTML = '<div class="no-results">Cargando datos...</div>';
+                return;
+            }
+
+            const q = query.toLowerCase().trim();
+            
+            const filtrados = empresas.filter(e => {
+                const matchTexto = 
+                    (e.empresa && e.empresa.toLowerCase().includes(q)) ||
+                    (e.municipio && e.municipio.toLowerCase().includes(q)) ||
+                    (e.cif && e.cif.toLowerCase().includes(q)) ||
+                    (e.sector && e.sector.toLowerCase().includes(q));
+                
+                if (filtroTipo === 'TODAS') return matchTexto;
+                return matchTexto && e.tipo === filtroTipo;
+            });
+
+            actualizarStats(filtrados);
+
+            if (filtrados.length === 0) {
+                lista.innerHTML = '<div class="no-results">No se encontraron resultados</div>';
+                return;
+            }
+
+            const html = filtrados.map(e => {
+                const esBlanca = e.tipo === 'BLANCA';
+                const direccionCompleta = `${e.direccion || ''} ${e.municipio || ''} ${e.cp || ''}`.trim();
+                const queryBusqueda = `${e.empresa} ${e.municipio || ''}`;
+
+                // Enlaces dinámicos
+                const urlMaps = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(direccionCompleta)}`;
+                const urlSearch = `https://www.google.com/search?q=${encodeURIComponent(queryBusqueda)}`;
+
+                return `
+                    <div class="card ${esBlanca ? 'BLANCA' : 'SI'}">
+                        <span class="badge ${esBlanca ? 'BLANCA' : 'SI'}">
+                            ${esBlanca ? '⚪ EMPRESA BLANCA' : '✅ CON ELECCIONES'}
+                        </span>
+                        <div class="empresa-name">${e.empresa}</div>
+                        <div class="card-info">
+                            📍 ${e.direccion || '—'}<br>
+                            🌍 ${e.municipio || '—'} ${e.cp ? '(' + e.cp + ')' : ''}<br>
+                            🆔 ${e.cif || '—'} &nbsp;|&nbsp; 🔢 CNAE: ${e.cnae || '—'}<br>
+                            👷 ${e.trabajadores || '—'} trabajadores &nbsp;|&nbsp; 🏭 ${e.sector || '—'}
+                        </div>
+                        
+                        <div class="card-actions">
+                            <a href="${urlMaps}" target="_blank" class="btn-action btn-maps">
+                                🗺️ Ir / Cómo llegar
+                            </a>
+                            <a href="${urlSearch}" target="_blank" class="btn-action btn-search">
+                                🔍 Más info / Tel.
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lista.innerHTML = html;
+        }
+
+        // Listeners para filtros
+        botonesFiltro.forEach(btn => {
+            btn.addEventListener('click', () => {
+                botonesFiltro.forEach(b => b.classList.remove('activo'));
+                btn.classList.add('activo');
+                filtroTipo = btn.dataset.tipo;
+                render(buscador.value);
+            });
+        });
+
+        buscador.addEventListener('input', (e) => render(e.target.value));
+
+        // Esperar a que el script de datos termine de cargar
+        document.getElementById('data-script').addEventListener('load', () => render());
+
+        // Por si el script ya estaba cargado (caché)
+        if (typeof empresas !== 'undefined') render();
+    </script>
+</body>
+</html>
