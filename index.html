@@ -27,6 +27,8 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         body { font-family: 'Inter', sans-serif; min-height: 100dvh; }
+        
+        /* Animaciones */
         .loading-spinner {
             width: 24px; height: 24px;
             border: 3px solid rgba(142, 68, 173, 0.2);
@@ -35,43 +37,147 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+        
+        /* Mapa Simulado */
+        .map-grid {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .marker-bounce {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Nav Fill logic */
+        .nav-link.active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 pb-24">
 
-<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-5 pt-6 pb-4">
-    <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-3">
-            <div class="bg-primary/10 p-2.5 rounded-xl">
-                <span class="material-symbols-outlined text-primary font-bold">domain</span>
-            </div>
-            <div>
-                <h1 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Censo Cuenca 2026</h1>
-                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Inteligencia Sindical Aplicada</p>
+<!-- SECCIÓN: DIRECTORIO -->
+<div id="page-directorio" class="page-content active">
+    <header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-5 pt-6 pb-4">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary/10 p-2.5 rounded-xl">
+                    <span class="material-symbols-outlined text-primary font-bold">domain</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Censo Cuenca 2026</h1>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Inteligencia Sindical Aplicada</p>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div id="stats-container" class="flex gap-3 overflow-x-auto no-scrollbar py-1">
         <!-- Stats dinámicos -->
-    </div>
-</header>
+        <div id="stats-container" class="flex gap-3 overflow-x-auto no-scrollbar py-1"></div>
+    </header>
 
-<section class="px-5 space-y-4 mb-6">
-    <div class="relative">
-        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-        <input id="buscador" class="w-full bg-white dark:bg-slate-800 border-none rounded-xl py-3.5 pl-12 pr-4 shadow-sm focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-slate-400" placeholder="Buscar por nombre, CIF o municipio..." type="text"/>
-    </div>
-    <div class="flex gap-2 overflow-x-auto no-scrollbar" id="filtros">
-        <button class="filter-btn whitespace-nowrap px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow-md" data-tipo="TODAS">Todas</button>
-        <button class="filter-btn whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-slate-700" data-tipo="SI">Con Elecciones</button>
-        <button class="filter-btn whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-slate-700" data-tipo="BLANCA">Blancas</button>
-    </div>
-</section>
+    <section class="px-5 space-y-4 mb-6">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <input id="buscador" class="w-full bg-white dark:bg-slate-800 border-none rounded-xl py-3.5 pl-12 pr-4 shadow-sm focus:ring-2 focus:ring-primary/20 text-sm placeholder:text-slate-400" placeholder="Buscar por nombre o municipio..." type="text"/>
+        </div>
+        <div class="flex gap-2 overflow-x-auto no-scrollbar" id="filtros">
+            <button class="filter-btn whitespace-nowrap px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold shadow-md transition-all" data-tipo="TODAS">Todas</button>
+            <button class="filter-btn whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-slate-700 transition-all" data-tipo="SI">Con Elecciones</button>
+            <button class="filter-btn whitespace-nowrap px-5 py-2 rounded-full bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-slate-700 transition-all" data-tipo="BLANCA">Blancas</button>
+        </div>
+    </section>
 
-<main id="lista-empresas" class="px-5 space-y-4">
-    <!-- Las tarjetas se generan aquí -->
-</main>
+    <main id="lista-empresas" class="px-5 space-y-4"></main>
+</div>
+
+<!-- SECCIÓN: MAPA -->
+<div id="page-mapa" class="page-content">
+    <div class="p-5">
+        <h2 class="text-2xl font-black mb-1">Mapa de Cobertura</h2>
+        <p class="text-slate-500 text-xs mb-6 font-medium">Propuesta: Análisis territorial de la provincia</p>
+        
+        <div class="relative w-full h-[450px] bg-slate-100 dark:bg-slate-800 rounded-3xl border-4 border-white dark:border-slate-700 shadow-xl overflow-hidden map-grid">
+            
+            <!-- Marcadores simulados -->
+            <div class="absolute top-1/4 left-1/2 marker-bounce">
+                <div class="relative group">
+                    <span class="material-symbols-outlined text-primary text-4xl">location_on</span>
+                    <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-white dark:bg-slate-900 px-3 py-1 rounded-full text-[10px] font-bold shadow-lg border border-slate-200 whitespace-nowrap">Cuenca (Cap)</div>
+                </div>
+            </div>
+            
+            <div class="absolute top-1/2 left-1/4">
+                <span class="material-symbols-outlined text-emerald-500 text-3xl">location_on</span>
+                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[8px] font-bold shadow">Tarancón</div>
+            </div>
+            
+            <div class="absolute bottom-1/4 right-1/4">
+                <span class="material-symbols-outlined text-rose-500 text-3xl">location_on</span>
+                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-rose-100 text-rose-700 px-2 py-0.5 rounded text-[8px] font-bold shadow">Motilla</div>
+            </div>
+
+            <!-- Panel de Leyenda -->
+            <div class="absolute bottom-4 left-4 right-4 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Leyenda Inteligente</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                        <p class="text-[10px] font-semibold">Representación Alta</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+                        <p class="text-[10px] font-semibold">Vacío Sindical</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-sm">route</span>
+                        <p class="text-[10px] font-semibold">Ruta Óptima</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-purple-500 text-sm">filter_alt</span>
+                        <p class="text-[10px] font-semibold">Filtrar por Sector</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 p-5 bg-primary/5 rounded-2xl border border-primary/10">
+            <h4 class="text-sm font-bold text-primary mb-2 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">info</span>
+                Funcionalidad del Mapa
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                El mapa permitirá visualizar la densidad de empresas sin elecciones para priorizar las rutas de expansión del sindicato en zonas industriales clave como Tarancón o Motilla.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- SECCIÓN: REPORTES -->
+<div id="page-reportes" class="page-content">
+    <div class="p-10 text-center flex flex-col items-center justify-center min-h-[80vh] gap-4">
+        <span class="material-symbols-outlined text-6xl text-slate-300">analytics</span>
+        <h2 class="text-xl font-bold">Estadísticas 2026</h2>
+        <p class="text-slate-500 text-sm">Análisis por sectores y municipios en tiempo real.</p>
+        <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-tight">Módulo en Desarrollo</span>
+    </div>
+</div>
+
+<!-- SECCIÓN: PERFIL -->
+<div id="page-perfil" class="page-content">
+    <div class="p-10 text-center flex flex-col items-center justify-center min-h-[80vh] gap-4">
+        <div class="size-24 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center mb-2">
+            <span class="material-symbols-outlined text-4xl text-slate-500">person</span>
+        </div>
+        <h2 class="text-xl font-bold">Delegado Cuenca</h2>
+        <p class="text-slate-500 text-sm">Configuración de cuenta y notificaciones de elecciones.</p>
+        <button class="mt-4 px-6 py-2 bg-slate-200 dark:bg-slate-700 rounded-lg text-sm font-bold hover:bg-slate-300 transition-colors">Cerrar Sesión</button>
+    </div>
+</div>
 
 <!-- Modal IA -->
 <div id="modal-ia" class="fixed inset-0 z-[100] hidden items-center justify-center p-5 bg-slate-900/60 backdrop-blur-sm">
@@ -81,45 +187,47 @@
                 <span class="material-symbols-outlined">auto_awesome</span>
                 <span>Estrategia de Visita</span>
             </div>
-            <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+            <button onclick="cerrarModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div id="ia-body" class="p-6 overflow-y-auto text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-            <!-- Contenido IA -->
-        </div>
+        <div id="ia-body" class="p-6 overflow-y-auto text-sm leading-relaxed text-slate-700 dark:text-slate-300"></div>
         <div class="p-4 bg-slate-50 dark:bg-slate-800/50 flex justify-end gap-3">
-            <button id="btn-audio" onclick="leerEstrategia()" class="hidden items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-purple-200 dark:shadow-none hover:bg-purple-700 transition-all">
+            <button id="btn-audio" onclick="leerEstrategia()" class="hidden items-center gap-2 bg-purple-600 text-white px-5 py-3 rounded-xl font-bold text-xs shadow-lg hover:bg-purple-700 active:scale-95 transition-all">
                 <span class="material-symbols-outlined text-sm">volume_up</span>
-                Escuchar consejos
+                Escuchar Audio
             </button>
         </div>
     </div>
 </div>
 
-<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-6 pb-6 pt-3 flex justify-between items-center z-[60]">
-    <a class="flex flex-col items-center gap-1 text-primary" href="#">
-        <span class="material-symbols-outlined font-variation-fill">view_list</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">Directorio</span>
-    </a>
-    <a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<!-- NAVEGACIÓN INFERIOR -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-6 pb-8 pt-3 flex justify-between items-center z-[60]">
+    <button onclick="nav('directorio')" class="nav-link flex flex-col items-center gap-1 text-primary active" data-section="directorio">
+        <span class="material-symbols-outlined">view_list</span>
+        <span class="text-[9px] font-bold uppercase">Directorio</span>
+    </button>
+    <button onclick="nav('mapa')" class="nav-link flex flex-col items-center gap-1 text-slate-400" data-section="mapa">
         <span class="material-symbols-outlined">map</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">Mapa</span>
-    </a>
-    <div class="relative -top-8 size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 text-white border-4 border-background-light dark:border-background-dark">
+        <span class="text-[9px] font-bold uppercase">Mapa</span>
+    </button>
+    
+    <div class="relative -top-8 size-14 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/40 text-white border-4 border-background-light dark:border-background-dark active:scale-90 transition-transform cursor-pointer">
         <span class="material-symbols-outlined text-2xl">add</span>
     </div>
-    <a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+
+    <button onclick="nav('reportes')" class="nav-link flex flex-col items-center gap-1 text-slate-400" data-section="reportes">
         <span class="material-symbols-outlined">analytics</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">Reportes</span>
-    </a>
-    <a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+        <span class="text-[9px] font-bold uppercase">Reportes</span>
+    </button>
+    <button onclick="nav('perfil')" class="nav-link flex flex-col items-center gap-1 text-slate-400" data-section="perfil">
         <span class="material-symbols-outlined">person</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">Perfil</span>
-    </a>
+        <span class="text-[9px] font-bold uppercase">Perfil</span>
+    </button>
 </nav>
 
-<script id="data-script" src="datos.js"></script>
+<!-- Scripts -->
+<script src="datos.js"></script>
 
 <script>
     const apiKey = ""; 
@@ -134,63 +242,67 @@
     let filtroTipo = 'TODAS';
     let ultimaEstrategia = "";
 
-    async function callGemini(prompt) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-        for (let i = 0; i < 5; i++) {
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text;
-            } catch (e) {
-                await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+    // Navegación entre secciones
+    function nav(sectionId) {
+        document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${sectionId}`).classList.add('active');
+        
+        document.querySelectorAll('.nav-link').forEach(l => {
+            l.classList.remove('text-primary', 'active');
+            l.classList.add('text-slate-400');
+            if(l.dataset.section === sectionId) {
+                l.classList.add('text-primary', 'active');
+                l.classList.remove('text-slate-400');
             }
-        }
-        throw new Error("Timeout");
+        });
+        window.scrollTo(0, 0);
     }
 
+    // IA: Generación de Estrategia
     async function generarEstrategia(id) {
+        // Encontrar empresa en datos.js
         const empresa = empresas.find(e => e.id == id);
         if (!empresa) return;
 
         modalIa.classList.remove('hidden');
         modalIa.classList.add('flex');
         iaBody.innerHTML = `
-            <div class="flex flex-col items-center justify-center py-10 gap-4">
+            <div class="flex flex-col items-center py-10 gap-3 text-center">
                 <div class="loading-spinner"></div>
-                <p class="text-xs font-bold text-purple-500 animate-pulse uppercase tracking-widest">Analizando sector y plantilla...</p>
-            </div>
-        `;
+                <p class="text-xs font-bold text-purple-500 uppercase tracking-widest">IA Analizando contexto industrial...</p>
+            </div>`;
         btnAudio.classList.add('hidden');
 
-        const prompt = `Actúa como asesor experto en acción sindical en Cuenca. Analiza esta empresa:
-        Nombre: ${empresa.empresa}
-        Sector: ${empresa.sector}
-        Tamaño: ${empresa.trabajadores} trabajadores
-        Estado: ${empresa.tipo === 'BLANCA' ? 'Sin representación' : 'Con elecciones'}
-        Municipio: ${empresa.municipio}
-        Genera 3 consejos prácticos y motivadores para un delegado que va a visitarlos hoy. Máximo 80 palabras. Sin emojis.`;
-
+        const prompt = `Como experto sindical, define estrategia breve para visitar a ${empresa.empresa} en ${empresa.municipio}, sector ${empresa.sector}, con ${empresa.trabajadores} trabajadores. La empresa es de tipo ${empresa.tipo === 'BLANCA' ? 'blanca (sin delegados)' : 'ya tiene delegados'}. Proporciona 3 puntos clave accionables. Máximo 40 palabras.`;
+        
         try {
-            const result = await callGemini(prompt);
-            ultimaEstrategia = result;
-            iaBody.innerText = result;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: "Responde de forma profesional, breve y directa." }] }
+                })
+            });
+            const data = await response.json();
+            const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            ultimaEstrategia = textResult;
+            iaBody.innerText = textResult;
             btnAudio.classList.remove('hidden');
-            btnAudio.classList.add('flex');
         } catch (err) {
-            iaBody.innerText = "No se ha podido conectar con el analista virtual. Por favor, revisa tu conexión.";
+            iaBody.innerText = "Error al conectar con el analista de IA. Comprueba la API key o conexión.";
         }
     }
 
+    // IA: Texto a Voz
     async function leerEstrategia() {
         if (!ultimaEstrategia) return;
-        const originalText = btnAudio.innerHTML;
-        btnAudio.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Procesando...`;
         btnAudio.disabled = true;
-
+        const originalContent = btnAudio.innerHTML;
+        btnAudio.innerHTML = `<span class="material-symbols-outlined animate-spin text-sm">sync</span> Generando audio...`;
+        
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
             const response = await fetch(url, {
@@ -198,28 +310,23 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: "gemini-2.5-flash-preview-tts",
-                    contents: [{ parts: [{ text: "Voz profesional: " + ultimaEstrategia }] }],
+                    contents: [{ parts: [{ text: "Consejos para el delegado: " + ultimaEstrategia }] }],
                     generationConfig: { 
                         responseModalities: ["AUDIO"],
                         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Puck" } } }
                     }
                 })
             });
-
             const data = await response.json();
-            const pcmData = data.candidates[0].content.parts[0].inlineData.data;
-            const audioBlob = pcmToWav(pcmData, 24000);
-            const audio = new Audio(URL.createObjectURL(audioBlob));
+            const pcmBase64 = data.candidates[0].content.parts[0].inlineData.data;
             
-            btnAudio.innerHTML = `<span class="material-symbols-outlined text-sm">graphic_eq</span> Escuchando...`;
+            const audioBlob = pcmToWav(pcmBase64, 24000);
+            const audio = new Audio(URL.createObjectURL(audioBlob));
             audio.play();
-            audio.onended = () => {
-                btnAudio.innerHTML = originalText;
-                btnAudio.disabled = false;
-            };
-        } catch (e) {
-            btnAudio.innerHTML = "Error de audio";
-            setTimeout(() => { btnAudio.innerHTML = originalText; btnAudio.disabled = false; }, 2000);
+            audio.onended = () => { btnAudio.disabled = false; btnAudio.innerHTML = originalContent; };
+        } catch (e) { 
+            btnAudio.disabled = false; 
+            btnAudio.innerHTML = originalContent; 
         }
     }
 
@@ -227,101 +334,107 @@
         const buffer = Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
         const wavHeader = new ArrayBuffer(44);
         const view = new DataView(wavHeader);
-        view.setUint32(0, 0x52494646, false); // RIFF
+        view.setUint32(0, 0x52494646, false); 
         view.setUint32(4, 36 + buffer.byteLength, true);
-        view.setUint32(8, 0x57415645, false); // WAVE
-        view.setUint32(12, 0x666d7420, false); // fmt
-        view.setUint32(16, 16, true);
-        view.setUint16(20, 1, true); // PCM
-        view.setUint16(22, 1, true); // Mono
-        view.setUint32(24, sampleRate, true);
+        view.setUint32(8, 0x57415645, false); 
+        view.setUint32(12, 0x666d7420, false);
+        view.setUint32(16, 16, true); 
+        view.setUint16(20, 1, true); 
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true); 
         view.setUint32(28, sampleRate * 2, true);
-        view.setUint16(32, 2, true);
+        view.setUint16(32, 2, true); 
         view.setUint16(34, 16, true);
-        view.setUint32(36, 0x64617461, false); // data
+        view.setUint32(36, 0x64617461, false); 
         view.setUint32(40, buffer.byteLength, true);
         return new Blob([wavHeader, buffer], { type: 'audio/wav' });
     }
 
     function cerrarModal() { modalIa.classList.add('hidden'); modalIa.classList.remove('flex'); }
 
+    // Renderizado de Datos y Filtros
     function actualizarStats(data) {
         const total = data.length;
         const si = data.filter(e => e.tipo === 'SI').length;
         const blanca = data.filter(e => e.tipo === 'BLANCA').length;
-
+        
         statsContainer.innerHTML = `
-            <div class="flex-1 min-w-[110px] bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-1">Total</p>
-                <span class="text-lg font-bold">${total}</span>
+            <div class="flex-1 min-w-[110px] bg-white dark:bg-slate-800 p-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm text-center">
+                <p class="text-[9px] uppercase font-bold text-slate-400 mb-0.5">Empresas</p><p class="text-xl font-black">${total}</p>
             </div>
-            <div class="flex-1 min-w-[110px] bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800/50 shadow-sm">
-                <p class="text-[10px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Elecciones</p>
-                <span class="text-lg font-bold text-emerald-700 dark:text-emerald-300">${si}</span>
+            <div class="flex-1 min-w-[110px] bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 text-center">
+                <p class="text-[9px] uppercase font-bold text-emerald-600 mb-0.5">Con Elecciones</p><p class="text-xl font-black text-emerald-700 dark:text-emerald-300">${si}</p>
             </div>
-            <div class="flex-1 min-w-[110px] bg-slate-100 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                <p class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-1">Blancas</p>
-                <span class="text-lg font-bold text-slate-700 dark:text-slate-300">${blanca}</span>
+            <div class="flex-1 min-w-[110px] bg-rose-50 dark:bg-rose-900/20 p-3 rounded-2xl border border-rose-100 dark:border-rose-800/50 text-center">
+                <p class="text-[9px] uppercase font-bold text-rose-600 mb-0.5">Blancas</p><p class="text-xl font-black text-rose-700 dark:text-rose-300">${blanca}</p>
             </div>
         `;
     }
 
     function render(query = '') {
-        if (typeof empresas === 'undefined') return;
+        if (typeof empresas === 'undefined') {
+            lista.innerHTML = '<div class="p-10 text-center text-slate-400">Error: Base de datos no cargada</div>';
+            return;
+        }
+        
         const q = query.toLowerCase().trim();
         const filtrados = empresas.filter(e => {
-            const match = e.empresa.toLowerCase().includes(q) || e.municipio.toLowerCase().includes(q) || e.cif.toLowerCase().includes(q);
-            return filtroTipo === 'TODAS' ? match : (match && e.tipo === filtroTipo);
+            const searchMatch = e.empresa.toLowerCase().includes(q) || e.municipio.toLowerCase().includes(q) || e.sector.toLowerCase().includes(q);
+            const typeMatch = filtroTipo === 'TODAS' ? true : e.tipo === filtroTipo;
+            return searchMatch && typeMatch;
         });
 
         actualizarStats(filtrados);
 
-        lista.innerHTML = filtrados.map(e => `
-            <div class="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700">
-                <div class="p-5">
-                    <div class="flex justify-between items-start mb-3">
-                        <span class="px-2.5 py-1 rounded-md ${e.tipo === 'SI' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'} text-[10px] font-bold uppercase tracking-wide">
-                            ${e.tipo === 'SI' ? 'Con Elecciones' : 'Empresa Blanca'}
-                        </span>
+        if (filtrados.length === 0) {
+            lista.innerHTML = '<div class="p-10 text-center text-slate-400 text-sm">No se han encontrado empresas con esos criterios</div>';
+            return;
+        }
+
+        lista.innerHTML = filtrados.slice(0, 50).map(e => `
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 active:bg-slate-50 dark:active:bg-slate-700 transition-colors">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="px-2.5 py-1 rounded-lg ${e.tipo === 'SI' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'} text-[10px] font-bold uppercase tracking-wide">
+                        ${e.tipo === 'SI' ? 'Estructurada' : 'Empresa Blanca'}
+                    </span>
+                    <span class="text-[10px] font-bold text-slate-400">ID: ${e.id}</span>
+                </div>
+                <h3 class="font-bold text-slate-900 dark:text-white leading-tight mb-4">${e.empresa}</h3>
+                
+                <div class="grid grid-cols-2 gap-y-3 mb-5">
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="material-symbols-outlined text-[16px] text-primary">location_on</span>
+                        <span class="truncate">${e.municipio}</span>
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">${e.empresa}</h3>
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                            <span class="material-symbols-outlined text-sm text-primary/60">location_on</span>
-                            <p class="text-xs">${e.direccion}, ${e.municipio} (${e.cp})</p>
-                        </div>
-                        <div class="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-                            <span class="material-symbols-outlined text-sm text-primary/60">groups</span>
-                            <p class="text-xs">${e.trabajadores} trabajadores • Sector: ${e.sector}</p>
-                        </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="material-symbols-outlined text-[16px] text-primary">groups</span>
+                        <span>${e.trabajadores} trabajadores</span>
                     </div>
-                    <div class="flex flex-col gap-3">
-                        <div class="flex gap-3">
-                            <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(e.direccion + ', ' + e.municipio + ', Cuenca')}&travelmode=driving" target="_blank" class="flex-1 flex items-center justify-center gap-2 bg-primary/10 text-primary py-3 rounded-xl font-bold text-sm">
-                                <span class="material-symbols-outlined text-lg">near_me</span> Ruta
-                            </a>
-                            <button onclick="generarEstrategia(${e.id})" class="flex-[2] flex items-center justify-center gap-2 bg-purple-600 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-purple-200 dark:shadow-none">
-                                <span class="material-symbols-outlined text-lg">auto_awesome</span> Estrategia IA
-                            </button>
-                        </div>
+                    <div class="col-span-2 flex items-center gap-2 text-xs text-slate-500">
+                        <span class="material-symbols-outlined text-[16px] text-primary">factory</span>
+                        <span class="truncate">${e.sector}</span>
                     </div>
                 </div>
+
+                <button onclick="generarEstrategia(${e.id})" class="w-full flex items-center justify-center gap-2 bg-purple-600 text-white py-3.5 rounded-xl font-bold text-xs shadow-md active:scale-[0.98] transition-all">
+                    <span class="material-symbols-outlined text-sm">auto_awesome</span> 
+                    Estrategia con Inteligencia Artificial
+                </button>
             </div>
         `).join('');
     }
 
+    // Event Listeners
     filtrosBtn.forEach(btn => btn.addEventListener('click', () => {
-        filtrosBtn.forEach(b => {
-            b.classList.remove('bg-primary', 'text-white', 'shadow-md');
-            b.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'border');
-        });
+        filtrosBtn.forEach(b => b.classList.remove('bg-primary', 'text-white', 'shadow-md'));
         btn.classList.add('bg-primary', 'text-white', 'shadow-md');
-        btn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-300', 'border');
         filtroTipo = btn.dataset.tipo;
         render(buscador.value);
     }));
 
     buscador.addEventListener('input', (e) => render(e.target.value));
+
+    // Carga inicial
     window.addEventListener('load', () => render());
 </script>
 </body>
