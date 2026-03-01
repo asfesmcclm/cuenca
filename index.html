@@ -27,7 +27,6 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         body { background-color: #f8fafc; }
         
-        /* Borde lateral grueso y borde de caja suave para distinción visual */
         .card-blanca { 
             border: 2px solid #fee2e2;
             border-left: 8px solid #ef4444; 
@@ -46,8 +45,7 @@
             <span class="material-symbols-outlined text-slate-700 font-bold">analytics</span>
             <h1 class="text-lg font-extrabold tracking-tight text-slate-800">Censo Cuenca 2026</h1>
         </div>
-        <!-- Referencia de versión en la esquina superior derecha -->
-        <div class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded">V1.3.1</div>
+        <div class="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded">V1.4</div>
     </div>
 
     <div class="px-5 pb-4 space-y-3">
@@ -70,8 +68,7 @@
     <div id="lista-empresas" class="space-y-4"></div>
 </main>
 
-<!-- El parámetro ?v ayuda a evitar problemas de caché en el navegador -->
-<script src="datos.js?v=1.3"></script>
+<script src="datos.js?v=1.4"></script>
 
 <script>
     const buscador = document.getElementById('buscador');
@@ -81,12 +78,7 @@
     
     let filtroTipo = 'TODAS';
 
-    /**
-     * Calcula la ruta específica a la dirección de la empresa.
-     * Combina dirección, municipio y CP para asegurar precisión en Google Maps.
-     */
     function abrirRuta(empresa, municipio, direccion, cp) {
-        // Formateamos la dirección completa para el destino
         const destinoFull = `${direccion}, ${cp} ${municipio}, Cuenca, España`;
         const url = `https://www.google.com/maps?saddr=My+Location&daddr=${encodeURIComponent(destinoFull)}&dirflg=d`;
         window.open(url, '_blank');
@@ -120,6 +112,7 @@
             const matchQuery = e.empresa.toLowerCase().includes(q) || 
                                e.municipio.toLowerCase().includes(q) || 
                                (e.sector && e.sector.toLowerCase().includes(q)) ||
+                               (e.cnae && e.cnae.toLowerCase().includes(q)) ||
                                (e.cif && e.cif.toLowerCase().includes(q));
             const matchTipo = filtroTipo === 'TODAS' ? true : e.tipo === filtroTipo;
             return matchQuery && matchTipo;
@@ -132,7 +125,6 @@
             return;
         }
 
-        // Limitamos a 100 resultados para mantener fluidez en el navegador
         lista.innerHTML = filtrados.slice(0, 100).map(e => `
             <div class="bg-white rounded-xl p-4 shadow-sm ${e.tipo === 'SI' ? 'card-si' : 'card-blanca'}">
                 <div class="flex justify-between items-start mb-3">
@@ -145,25 +137,40 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-y-2 mb-4">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-2 mb-4">
                     <div class="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
-                        <span class="material-symbols-outlined text-[14px] text-slate-400">location_on</span>
+                        <span class="material-symbols-outlined text-[14px] text-slate-400 font-bold">location_on</span>
                         <span class="truncate">${e.municipio}</span>
                     </div>
                     <div class="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
-                        <span class="material-symbols-outlined text-[14px] text-slate-400">groups</span>
+                        <span class="material-symbols-outlined text-[14px] text-slate-400 font-bold">groups</span>
                         <span>${e.trabajadores} empl.</span>
                     </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
+                        <span class="material-symbols-outlined text-[14px] text-slate-400 font-bold">label</span>
+                        <span>CNAE: ${e.cnae || 'N/A'}</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
+                        <span class="material-symbols-outlined text-[14px] text-slate-400 font-bold">factory</span>
+                        <span class="truncate">${e.sector || 'N/A'}</span>
+                    </div>
                     <div class="col-span-2 flex items-center gap-1.5 text-[11px] text-slate-500 font-medium border-t border-slate-50 pt-2 mt-1">
-                        <span class="material-symbols-outlined text-[14px] text-slate-400">map</span>
-                        <span class="truncate">${e.direccion || 'Dirección no disponible'}</span>
+                        <span class="material-symbols-outlined text-[14px] text-slate-400 font-bold">map</span>
+                        <span class="truncate italic">${e.direccion || 'Dirección no disponible'}</span>
                     </div>
                 </div>
 
-                <button onclick="abrirRuta('${e.empresa.replace(/'/g, "\\'")}', '${e.municipio}', '${(e.direccion || "").replace(/'/g, "\\'")}', '${e.cp}')" 
-                    class="w-full bg-slate-800 text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
-                    <span class="material-symbols-outlined text-sm">directions_car</span> Calcular Ruta en Coche
-                </button>
+                <div class="flex flex-col gap-2">
+                    <button onclick="abrirRuta('${e.empresa.replace(/'/g, "\\'")}', '${e.municipio}', '${(e.direccion || "").replace(/'/g, "\\'")}', '${e.cp}')" 
+                        class="w-full bg-slate-800 text-white py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
+                        <span class="material-symbols-outlined text-sm">directions_car</span> Calcular Ruta en Coche
+                    </button>
+                    
+                    <button onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(e.empresa + ' ' + e.municipio)}', '_blank')" 
+                        class="w-full border border-slate-200 text-slate-600 py-2.5 rounded-lg text-[10px] font-bold uppercase flex items-center justify-center gap-2 active:bg-slate-50 transition-all">
+                        <span class="material-symbols-outlined text-sm">search</span> Más información
+                    </button>
+                </div>
             </div>
         `).join('');
     }
@@ -179,7 +186,6 @@
 
     buscador.addEventListener('input', (e) => render(e.target.value));
 
-    // Carga inicial
     window.onload = () => {
         setTimeout(() => render(), 100);
     };
